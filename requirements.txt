@@ -1,0 +1,7 @@
+kagglehub
+numpy==1.26.4
+tensorflow==2.17.0
+scikit-learn==1.5.2
+matplotlib==3.9.2
+seaborn==0.13.2
+Pillow==10.4.0
