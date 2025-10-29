@@ -1,4 +1,3 @@
-# src/train_model.py
 import os
 import json
 import math
@@ -19,7 +18,7 @@ tf.random.set_seed(42)
 tf.config.threading.set_intra_op_parallelism_threads(6)
 tf.config.threading.set_inter_op_parallelism_threads(4)
 
-#PARAMETROS
+#PARAMETROS Globales y rutas 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 EPOCHS_STAGE1 = 25
