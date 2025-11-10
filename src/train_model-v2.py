@@ -1,11 +1,12 @@
 import os
 import json
 import math
+import csv
 from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, Callback
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.applications import EfficientNetB0
 from sklearn.utils.class_weight import compute_class_weight
@@ -19,7 +20,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # PARÁMETROS GLOBALES
-
+duration = None
 np.random.seed(42)
 tf.random.set_seed(42)
 tf.config.threading.set_intra_op_parallelism_threads(6)
@@ -43,7 +44,46 @@ LOCAL_EFF_WEIGHTS = os.path.join("src", "efficientnetb0_notop.h5")
 USE_MIXUP = False
 MIXUP_ALPHA = 0.2
 
-# FUNCIONES AUXILIARES
+
+# === NUEVO: Callback personalizado para guardar métricas de cada época ===
+class EpochMetricsLogger(Callback):
+    def __init__(self, filepath, val_data=None):
+        super().__init__()
+        self.filepath = filepath
+        self.val_data = val_data
+        with open(filepath, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["epoch", "lr", "accuracy", "val_accuracy", "loss", "val_loss", "val_f1"])
+        self.history = []
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        lr = float(tf.keras.backend.get_value(self.model.optimizer.lr))
+        acc = logs.get("accuracy")
+        val_acc = logs.get("val_accuracy")
+        loss = logs.get("loss")
+        val_loss = logs.get("val_loss")
+
+        # Calcular F1 sobre conjunto de validación
+        val_f1 = None
+        if self.val_data is not None:
+            y_true, y_pred = [], []
+            for x_batch, y_batch in self.val_data.take(5):  # Toma 5 lotes para estimar más rápido
+                preds = self.model.predict(x_batch, verbose=0)
+                y_true.extend(y_batch.numpy())
+                y_pred.extend(np.argmax(preds, axis=1))
+            val_f1 = f1_score(y_true, y_pred, average="macro")
+
+        with open(self.filepath, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([epoch + 1, lr, acc, val_acc, loss, val_loss, val_f1])
+
+        logs["val_f1"] = val_f1
+        self.history.append(logs)
+
+
+
+# === FUNCIONES AUXILIARES ORIGINALES ===
 def count_images_in_split(path):
     total, classes = 0, []
     if not os.path.exists(path):
@@ -143,8 +183,10 @@ def make_eval_ds(ds):
     ds = ds.prefetch(tf.data.AUTOTUNE)
     return ds
 
+
 # FUNCIÓN PRINCIPAL
 def main():
+    start_time = datetime.now()
     global class_names, data_augmentation
 
     print(f"Configuración: IMG_SIZE={IMG_SIZE} | BATCH_SIZE={BATCH_SIZE} | MIXUP={USE_MIXUP}")
@@ -176,15 +218,28 @@ def main():
 
     data_augmentation = tf.keras.Sequential([
         tf.keras.layers.InputLayer(input_shape=(*IMG_SIZE, 3)),
+
+        # Transformaciones geométricas
         tf.keras.layers.RandomFlip("horizontal_and_vertical"),
-        tf.keras.layers.RandomRotation(0.25),
-        tf.keras.layers.RandomZoom(0.35),
-        tf.keras.layers.RandomContrast(0.4),
-        tf.keras.layers.RandomTranslation(0.1, 0.1),
-        tf.keras.layers.RandomBrightness(0.25),
+        tf.keras.layers.RandomRotation(0.35),
+        tf.keras.layers.RandomZoom(0.45),
+        tf.keras.layers.RandomTranslation(0.25, 0.25),
         tf.keras.layers.RandomCrop(IMG_SIZE[0], IMG_SIZE[1]),
-        tf.keras.layers.GaussianNoise(0.03),
-    ], name="data_augmentation")
+
+        # Transformaciones fotométricas
+        tf.keras.layers.RandomContrast(0.6),
+        tf.keras.layers.RandomBrightness(0.4),
+        tf.keras.layers.RandomSaturation(0.5),
+
+        # Ruido y perturbaciones 
+        tf.keras.layers.GaussianNoise(0.08),
+        tf.keras.layers.RandomJpegQuality(30, 100),
+        tf.keras.layers.RandomHue(0.1),
+
+        # Oclusiones o perturbaciones espaciales
+        tf.keras.layers.RandomCrop(IMG_SIZE[0], IMG_SIZE[1]),
+    ], name="data_augmentation_agresivo")
+
 
     train_ds = make_train_ds(train_raw, use_mixup=USE_MIXUP)
     val_ds = make_eval_ds(val_raw)
@@ -203,13 +258,35 @@ def main():
     model = build_model(class_names)
     callbacks, initial_epoch = setup_callbacks(model)
 
-    history = train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, initial_epoch)
+    # === NUEVO: CSV Logger ===
+    csv_logger = EpochMetricsLogger(os.path.join(OUTPUT_DIR, "epoch_metrics.csv"))
+    callbacks.append(csv_logger)
+
+    # === Tiempo Fase 1 ===
+    start_stage1 = datetime.now()
+    history = train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, initial_epoch, callbacks)
+    duration_stage1 = datetime.now() - start_stage1
+    print(f"🕒 Tiempo Fase 1: {duration_stage1}")
+
     plot_training_curves(history, "training_curves")
 
-    history_fine = fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps)
+    # === Tiempo Fase 2 (fine-tuning) ===
+    start_stage2 = datetime.now()
+    history_fine = fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, callbacks)
+    duration_stage2 = datetime.now() - start_stage2
+    print(f"🕒 Tiempo Fine-Tuning: {duration_stage2}")
+
     plot_training_curves(history_fine, "training_curves_fine")
 
+    # === Evaluaciones separadas ===
+    print("\nEvaluando en conjunto de validación...")
+    model.evaluate(val_ds)
+
     evaluate_and_export(model, test_ds, test_raw, class_names, class_weights, test_steps)
+    end_time = datetime.now()
+    duration = end_time - start_time
+    print(f"\n⏱ Tiempo total de entrenamiento: {duration}")
+
 
 # ENTRENAMIENTO
 def build_model(class_names):
@@ -249,8 +326,7 @@ def setup_callbacks(model):
     checkpoint_full = ModelCheckpoint(CKPT_PATH, monitor="val_loss", save_best_only=False, verbose=0)
     return [early_stop, reduce_lr, checkpoint_best, checkpoint_full], 0
 
-
-def train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, initial_epoch):
+def train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, initial_epoch, callbacks):
     print("\nEntrenamiento Fase 1 (cabeza)...")
     history = model.fit(
         train_ds,
@@ -259,16 +335,17 @@ def train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validat
         initial_epoch=initial_epoch,
         steps_per_epoch=steps_per_epoch,
         validation_steps=validation_steps,
-        callbacks=setup_callbacks(model)[0],
+        callbacks=callbacks,
         class_weight=class_weights
     )
     return history
 
 
-def fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps):
+def fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, callbacks):
     print("\nFine-tuning del modelo base...")
     base_model = model.layers[2]
     base_model.trainable = True
+
     for layer in base_model.layers[:-100]:
         layer.trainable = False
 
@@ -282,35 +359,73 @@ def fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, val
         initial_epoch=EPOCHS_STAGE1,
         steps_per_epoch=steps_per_epoch,
         validation_steps=validation_steps,
-        callbacks=setup_callbacks(model)[0],
+        callbacks=callbacks,
         class_weight=class_weights
     )
     return history_fine
 
-
 def plot_training_curves(history, filename_prefix="training_curves"):
+    """
+    Genera gráficos de Accuracy, Loss, F1-score (si existe) y Learning Rate por época.
+    """
     acc = history.history.get('accuracy', [])
     val_acc = history.history.get('val_accuracy', [])
     loss = history.history.get('loss', [])
     val_loss = history.history.get('val_loss', [])
     epochs = range(len(acc))
 
-    plt.figure(figsize=(10, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, acc, label='Train Acc')
-    plt.plot(epochs, val_acc, label='Val Acc')
-    plt.legend()
-    plt.title("Accuracy por época")
+    plt.figure(figsize=(12, 5))
 
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, loss, label='Train Loss')
-    plt.plot(epochs, val_loss, label='Val Loss')
+    # === Accuracy ===
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, acc, label='Train Accuracy', marker='o')
+    plt.plot(epochs, val_acc, label='Val Accuracy', marker='o')
+    plt.xlabel('Épocas')
+    plt.ylabel('Accuracy')
+    plt.title('Evolución de Accuracy')
     plt.legend()
-    plt.title("Loss por época")
+    plt.grid(True)
+
+    # === Loss ===
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, loss, label='Train Loss', marker='o')
+    plt.plot(epochs, val_loss, label='Val Loss', marker='o')
+    plt.xlabel('Épocas')
+    plt.ylabel('Loss')
+    plt.title('Evolución de Loss')
+    plt.legend()
+    plt.grid(True)
 
     plt.tight_layout()
     plt.savefig(os.path.join(OUTPUT_DIR, f"{filename_prefix}.png"))
     plt.close()
+
+    # === Intentar leer CSV de métricas adicionales ===
+    csv_path = os.path.join(OUTPUT_DIR, "epoch_metrics.csv")
+    if os.path.exists(csv_path):
+        import pandas as pd
+        df = pd.read_csv(csv_path)
+        if "f1_score" in df.columns:
+            plt.figure(figsize=(10, 4))
+            plt.plot(df["epoch"], df["f1_score"], marker='o', color='green')
+            plt.xlabel("Época")
+            plt.ylabel("F1-score (val)")
+            plt.title("Evolución del F1-score por época")
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(OUTPUT_DIR, f"{filename_prefix}_f1.png"))
+            plt.close()
+
+        if "lr" in df.columns:
+            plt.figure(figsize=(10, 4))
+            plt.plot(df["epoch"], df["lr"], marker='o', color='purple')
+            plt.xlabel("Época")
+            plt.ylabel("Learning Rate")
+            plt.title("Evolución del Learning Rate")
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(OUTPUT_DIR, f"{filename_prefix}_lr.png"))
+            plt.close()
 
 # EVALUACIÓN Y EXPORTACIÓN
 def evaluate_and_export(model, test_ds, test_raw, class_names, class_weights, test_steps):
@@ -420,6 +535,7 @@ def evaluate_and_export(model, test_ds, test_raw, class_names, class_weights, te
             "CLASS_WEIGHTS": class_weights
         }
     }
+    summary["training_duration"] = str(duration)
 
     with open(os.path.join(OUTPUT_DIR, "metrics_summary.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=4, ensure_ascii=False)
