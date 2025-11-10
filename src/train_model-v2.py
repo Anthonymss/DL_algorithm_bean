@@ -233,7 +233,6 @@ def main():
 
         # Ruido y perturbaciones 
         tf.keras.layers.GaussianNoise(0.08),
-        tf.keras.layers.RandomJpegQuality(30, 100),
         tf.keras.layers.RandomHue(0.1),
 
         # Oclusiones o perturbaciones espaciales
