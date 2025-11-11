@@ -45,7 +45,7 @@ USE_MIXUP = False
 MIXUP_ALPHA = 0.2
 
 
-# === NUEVO: Callback personalizado para guardar métricas de cada época ===
+#Callback personalizado para guardar métricas
 class EpochMetricsLogger(Callback):
     def __init__(self, filepath, val_data=None):
         super().__init__()
@@ -68,7 +68,7 @@ class EpochMetricsLogger(Callback):
         val_f1 = None
         if self.val_data is not None:
             y_true, y_pred = [], []
-            for x_batch, y_batch in self.val_data.take(5):  # Toma 5 lotes para estimar más rápido
+            for x_batch, y_batch in self.val_data.take(5):
                 preds = self.model.predict(x_batch, verbose=0)
                 y_true.extend(y_batch.numpy())
                 y_pred.extend(np.argmax(preds, axis=1))
@@ -83,7 +83,7 @@ class EpochMetricsLogger(Callback):
 
 
 
-# === FUNCIONES AUXILIARES ORIGINALES ===
+#FUNCIONES AUXILIARES
 def count_images_in_split(path):
     total, classes = 0, []
     if not os.path.exists(path):
@@ -221,22 +221,19 @@ def main():
 
         # Transformaciones geométricas
         tf.keras.layers.RandomFlip("horizontal_and_vertical"),
-        tf.keras.layers.RandomRotation(0.35),
-        tf.keras.layers.RandomZoom(0.45),
-        tf.keras.layers.RandomTranslation(0.25, 0.25),
-        tf.keras.layers.RandomCrop(IMG_SIZE[0], IMG_SIZE[1]),
+        tf.keras.layers.RandomRotation(0.45),
+        tf.keras.layers.RandomZoom(0.55),
+        tf.keras.layers.RandomTranslation(0.3, 0.3),
 
         # Transformaciones fotométricas
-        tf.keras.layers.RandomContrast(0.6),
-        tf.keras.layers.RandomBrightness(0.4),
-        tf.keras.layers.RandomSaturation(0.5),
+        tf.keras.layers.RandomContrast(0.7),
+        tf.keras.layers.RandomBrightness(0.5),
+        tf.keras.layers.RandomSaturation(0.6),
 
         # Ruido y perturbaciones 
-        tf.keras.layers.GaussianNoise(0.08),
-        tf.keras.layers.RandomHue(0.1),
+        tf.keras.layers.GaussianNoise(0.1),
+        tf.keras.layers.RandomHue(0.12),
 
-        # Oclusiones o perturbaciones espaciales
-        tf.keras.layers.RandomCrop(IMG_SIZE[0], IMG_SIZE[1]),
     ], name="data_augmentation_agresivo")
 
 
@@ -257,11 +254,11 @@ def main():
     model = build_model(class_names)
     callbacks, initial_epoch = setup_callbacks(model)
 
-    # === NUEVO: CSV Logger ===
+    #CSV Logger
     csv_logger = EpochMetricsLogger(os.path.join(OUTPUT_DIR, "epoch_metrics.csv"))
     callbacks.append(csv_logger)
 
-    # === Tiempo Fase 1 ===
+    #Tiempo Fase 1
     start_stage1 = datetime.now()
     history = train_stage(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, initial_epoch, callbacks)
     duration_stage1 = datetime.now() - start_stage1
@@ -269,7 +266,7 @@ def main():
 
     plot_training_curves(history, "training_curves")
 
-    # === Tiempo Fase 2 (fine-tuning) ===
+    #Tiempo Fase 2 (fine-tuning)
     start_stage2 = datetime.now()
     history_fine = fine_tune_model(model, train_ds, val_ds, class_weights, steps_per_epoch, validation_steps, callbacks)
     duration_stage2 = datetime.now() - start_stage2
@@ -277,7 +274,7 @@ def main():
 
     plot_training_curves(history_fine, "training_curves_fine")
 
-    # === Evaluaciones separadas ===
+    #Evaluaciones separadas
     print("\nEvaluando en conjunto de validación...")
     model.evaluate(val_ds)
 
