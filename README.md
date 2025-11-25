@@ -9,10 +9,12 @@ DL_Frejol/
 ├── data/                  # Directorio para los datos de entrenamiento y validación
 ├── outputs/               # Directorio para guardar modelos y registros de entrenamiento
 ├── src/                   # Código fuente
-│   ├── dataloader.py     # Utilidades para cargar y preprocesar datos
-│   ├── train_model.py    # Script para entrenar el modelo
-│   ├── evaluate_model.py # Script para evaluar el modelo
-│   └── efficientnetb0_notop.h5  # Pesos pre-entrenados de EfficientNetB0
+│   ├── model/            # Scripts de entrenamiento y evaluación
+│   │   ├── dataloader.py
+│   │   ├── train_model.py
+│   │   ├── evaluate_model.py
+│   │   └── generate_plots.py
+│   └── explainability/   # Scripts de explicabilidad (GradCAM, etc.)
 ├── requirements.txt      # Dependencias de Python
 └── classes.txt           # Lista de clases o categorías
 ```
@@ -45,7 +47,7 @@ pip install -r requirements.txt
 - Descargar y organizar automáticamente:
 
 ```powershell
-python src\dataloader.py
+python src\model\dataloader.py
 ```
 Si usa datos propios, coloque imágenes en `data/processed` con la misma estructura por clase.
 
@@ -54,7 +56,7 @@ Si usa datos propios, coloque imágenes en `data/processed` con la misma estruct
 - Ejecutar entrenamiento completo:
 
 ```powershell
-python src\train_model.py
+python src\model\train_model.py
 ```
 
 - Comportamiento clave:
@@ -71,13 +73,13 @@ Parámetros comunes (modificar en `train_model.py` si se requiere): `BATCH_SIZE`
 - Evaluación sobre `data/processed/test`:
 
 ```powershell
-python src\evaluate_model.py
+python src\model\evaluate_model.py
 ```
 
 - Generar figuras y resúmenes a partir de los ficheros de evaluación y del log de épocas:
 
 ```powershell
-python src\generate_plots.py
+python src\model\generate_plots.py
 ```
 
 - Artefactos de evaluación: `outputs/evaluation/metrics_summary.json`, `y_true.npy`, `y_pred.npy`, `y_prob.npy`, `embeddings.npy`, `confusion_matrix.npy`.
