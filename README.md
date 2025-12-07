@@ -118,12 +118,12 @@ Optimizador: Adam
 Función de pérdida: Categorical Crossentropy
 ```
 Estrategia:
-
+```
 Fase 1: congelamiento de la red base y entrenamiento de la cabeza
 Fase 2: fine-tuning de las capas superiores de EfficientNet
-
 ```
 Callbacks utilizados:
+```
 EarlyStopping
 ReduceLROnPlateau
 ModelCheckpoint
