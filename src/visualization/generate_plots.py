@@ -150,7 +150,7 @@ def plot_f1_per_class(metrics):
 
     f1_vals = [f1_dict[c]["f1-score"] for c in classes]
 
-    bar_color = "#003366"
+    bar_color = "#2261A0"
     text_color = "black"
     
     fig, ax = plt.subplots(figsize=(7, 5))
