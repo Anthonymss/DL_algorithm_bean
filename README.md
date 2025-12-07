@@ -103,6 +103,42 @@ Estructura esperada de los datos procesados[Si tiene su data adecualo al siguien
       ├── healthy/
       └── unknown/
 ```
+## 5.2 Entrenamiento del Modelo
+
+```powershell
+python src\training\train_model.py
+```
+Este script ejecuta el entrenamiento completo del modelo bajo un esquema de transfer learning con EfficientNetB0 en dos fases:
+
+Configuración principal:
+```
+Resolución de entrada: 224 × 224
+Batch size: 32
+Optimizador: Adam
+Función de pérdida: Categorical Crossentropy
+```
+Estrategia:
+
+Fase 1: congelamiento de la red base y entrenamiento de la cabeza
+Fase 2: fine-tuning de las capas superiores de EfficientNet
+
+```
+Callbacks utilizados:
+EarlyStopping
+ReduceLROnPlateau
+ModelCheckpoint
+```
+Artefactos generados automáticamente:
+```
+outputs/models/
+├── best_model.keras        # Mejor modelo según validación
+├── checkpoint_full.keras   # Checkpoint completo
+├── classes.txt             # Clases usadas
+├── epoch_metrics.csv       # Métricas por época
+└── training_times.json     # Tiempos de entrenamiento
+```
+El modelo guardado en best_model.keras es posteriormente utilizado por los módulos de evaluación, visualización e inferencia.
+
 ## 5.3 Evaluación del Modelo
    python src\evaluation\evaluate_model.py
 Este script carga outputs/models/best_model.keras, evalúa el desempeño sobre el conjunto de prueba y guarda artefactos de evaluación.
