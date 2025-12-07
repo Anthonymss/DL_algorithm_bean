@@ -31,10 +31,11 @@ DL_algorithm_bean/
 │   │   └── generate_plots.py
 │   ├── inference/                # Pruebas con imágenes individuales
 │   │   └── image_tester.py
-│   └── explainability/           # Grad-CAM y XAI[Fuera del pipeline: se ejecuta 1 por 1]
+│   └── explainability/           # Grad-CAM y XAI[Fuera del pipeline: ejecutar run_all.py]
 │       ├── gradcam.py
 │       ├── gradcam_pp.py
-│       └── occlusion.py
+│       ├── occlusion.py
+│       └── run_all.py
 ├── notebooks/
 │   └── colab_test.ipynb
 ├── requirements.txt
@@ -141,5 +142,5 @@ Salida:
 | **Weighted Avg** | **0.9450** | **0.9444** | **0.9440** | **1296** |
 
 
-## 8.Dataset y Créditos
+## 7.Dataset y Créditos
 M. S. Jahid, “Bean Crop Disease Diagnosis and Spatial Analysis,” Kaggle, 2023. [Online]. Available: https://www.kaggle.com/datasets/msjahid/bean-crop-disease-diagnosis-and-spatial-analysis
