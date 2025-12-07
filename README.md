@@ -57,22 +57,29 @@ Dependencias principales:
 ```
 ## 3. Instalación del Entorno
 Opción A — PowerShell (venv)
+```text
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1
    pip install -r requirements.txt
-
+```
 Opción B — Conda
+```text
    conda create -n dlfrejol python=3.10 -y
    conda activate dlfrejol
    pip install -r requirements.txt
+```
 ## 4. Ejecución Completa del Pipeline
 Para ejecutar todo el flujo (datos → entrenamiento → evaluación → gráficos) con un solo comando:
+```text
    python src\pipeline\main.py
+```
 Este comando ejecuta secuencialmente:
+```text
    Preparación de datos (src/training/dataloader.py)
    Entrenamiento del modelo (src/training/train_model.py)
    Evaluación (src/evaluation/evaluate_model.py)
    Generación de gráficos (src/visualization/generate_plots.py)
+```
 ## 5. Uso Manual de los Scripts
 
 ## 5.1 Preparación de Datos
