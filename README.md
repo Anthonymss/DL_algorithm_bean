@@ -77,6 +77,7 @@ Este comando ejecuta secuencialmente:
 ## 5.1 Preparación de Datos
    python src\training\dataloader.py
 Estructura esperada de los datos procesados[Si tiene su data adecualo al siguiente formato]:
+```text
    data/processed/
    ├── train/
    │   ├── als/
@@ -93,11 +94,13 @@ Estructura esperada de los datos procesados[Si tiene su data adecualo al siguien
       ├── bean_rust/
       ├── healthy/
       └── unknown/
+```
 ## 5.3 Evaluación del Modelo
    python src\evaluation\evaluate_model.py
 Este script carga outputs/models/best_model.keras, evalúa el desempeño sobre el conjunto de prueba y guarda artefactos de evaluación.
 Artefactos generados:
    outputs/evaluation/
+```text
    ├── metrics_summary.json    # Resumen global de métricas
    ├── y_true.npy              # Etiquetas verdaderas
    ├── y_pred.npy              # Predicciones discretas
@@ -105,13 +108,16 @@ Artefactos generados:
    ├── images.npy              # Referencias a las imágenes de test
    ├── embeddings.npy          # Embeddings del penúltimo layer
    └── confusion_matrix.npy    # Matriz de confusión
+```
 ## 5.4 Generación de Gráficos
    python src\visualization\generate_plots.py
 Salida:
    outputs/plots/
+```text
    ├── training_curves.png / .pdf / .svg
    ├── confusion_matrix.png / .pdf / .svg
    └── (otros gráficos según configuración)
+```
 ## 6. Resultados del Modelo[Del modelo reportado]
 ## 6.1 Métricas Globales
 | Métrica         | Valor      |
