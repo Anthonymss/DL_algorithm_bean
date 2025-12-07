@@ -4,7 +4,7 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.17-orange)
 ![Accuracy](https://img.shields.io/badge/Accuracy-94.44%25-brightgreen)
 ![F1](https://img.shields.io/badge/F1--Macro-0.951-success)
-![License](https://img.shields.io/badge/License-Academic-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 Este proyecto implementa un **pipeline completo y reproducible** para la **clasificación automática de enfermedades en hojas de frijol** mediante **transfer learning con EfficientNetB0 (TensorFlow)**. Incluye descarga/preparación de datos, entrenamiento en dos fases, evaluación cuantitativa, generación de métricas y gráficos, explicabilidad (Grad-CAM) y ejecución automatizada mediante un orquestador `main.py`.
 
@@ -44,6 +44,7 @@ DL_algorithm_bean/
 ```
 ## 2. Requisitos
 Python ≥ 3.8 (Recomendado: 3.10 || 3.12)
+```text
 Dependencias principales:
    tensorflow==2.17.0
    numpy==1.26.4
@@ -52,9 +53,8 @@ Dependencias principales:
    matplotlib==3.9.2
    json5==0.9.25
    kagglehub>=0.2.3
-   fastapi
-   uvicorn
    GPU con CUDA (opcional, recomendada)
+```
 ## 3. Instalación del Entorno
 Opción A — PowerShell (venv)
    python -m venv .venv
