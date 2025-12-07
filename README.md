@@ -144,3 +144,12 @@ Salida:
 
 ## 7.Dataset y Créditos
 M. S. Jahid, “Bean Crop Disease Diagnosis and Spatial Analysis,” Kaggle, 2023. [Online]. Available: https://www.kaggle.com/datasets/msjahid/bean-crop-disease-diagnosis-and-spatial-analysis
+
+
+## 8. Demo (Aplicación Web)
+![Demo](https://img.shields.io/badge/Demo-Online-success)
+La aplicación web para probar el modelo está disponible en el siguiente enlace:
+
+🔗 **https://bean-disease-app.vercel.app/**
+
+La plataforma permite cargar imágenes de hojas de frijol y obtener la predicción de la enfermedad utilizando el modelo entrenado con EfficientNetB0.
