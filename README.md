@@ -69,7 +69,9 @@ Opción B — Conda
    pip install -r requirements.txt
 ```
 ## 4. Ejecución Completa del Pipeline
-Para ejecutar todo el flujo (datos → entrenamiento → evaluación → gráficos) con un solo comando:
+Para ejecutar todo el flujo
+``` (datos → entrenamiento → evaluación → gráficos)```
+con un solo comando:
 ```text
    python src\pipeline\main.py
 ```
@@ -83,7 +85,7 @@ Este comando ejecuta secuencialmente:
 ## 5. Uso Manual de los Scripts
 
 ## 5.1 Preparación de Datos
-   python src\training\dataloader.py
+```python src\training\dataloader.py```
 Estructura esperada de los datos procesados[Si tiene su data adecualo al siguiente formato]:
 ```text
    data/processed/
@@ -137,10 +139,10 @@ outputs/models/
 ├── epoch_metrics.csv       # Métricas por época
 └── training_times.json     # Tiempos de entrenamiento
 ```
-El modelo guardado en best_model.keras es posteriormente utilizado por los módulos de evaluación, visualización e inferencia.
+El modelo guardado en `best_model.keras` es posteriormente utilizado por los módulos de evaluación, visualización e inferencia.
 
 ## 5.3 Evaluación del Modelo
-   python src\evaluation\evaluate_model.py
+```python src\evaluation\evaluate_model.py```
 Este script carga outputs/models/best_model.keras, evalúa el desempeño sobre el conjunto de prueba y guarda artefactos de evaluación.
 Artefactos generados:
    outputs/evaluation/
@@ -154,7 +156,7 @@ Artefactos generados:
    └── confusion_matrix.npy    # Matriz de confusión
 ```
 ## 5.4 Generación de Gráficos
-   python src\visualization\generate_plots.py
+```python src\visualization\generate_plots.py```
 Salida:
    outputs/plots/
 ```text
@@ -195,4 +197,4 @@ La aplicación web para probar el modelo está disponible en el siguiente enlace
 
 🔗 **https://bean-disease-app.vercel.app/**
 
-La plataforma permite cargar imágenes de hojas de frijol y obtener la predicción de la enfermedad utilizando el modelo entrenado con EfficientNetB0.
+La plataforma permite cargar imágenes de hojas de frijol y obtener la predicción de la enfermedad utilizando el modelo entrenado con `EfficientNetB0`.
