@@ -37,13 +37,14 @@ DL_algorithm_bean/
 │       ├── occlusion.py
 │       └── run_all.py
 ├── notebooks/
-│   └── colab_test.ipynb
+│   └── colab_test.ipynb         # Colab: anotaciones y clasificación
 ├── requirements.txt
 ├── classes.txt
 └── README.md
 ```
 ## 2. Requisitos
 Python ≥ 3.8 (Recomendado: 3.10 || 3.12)
+
 Dependencias principales:
 ```text
    tensorflow==2.17.0
@@ -51,8 +52,10 @@ Dependencias principales:
    scikit-learn==1.5.2
    pandas==2.3.3
    matplotlib==3.9.2
+   seaborn==0.13.2
    json5==0.9.25
    kagglehub>=0.2.3
+   opencv-python==4.10.0.84  
    GPU con CUDA (opcional, recomendada)
 ```
 ## 3. Instalación del Entorno
@@ -136,7 +139,7 @@ Callbacks utilizados:
 ```
 Artefactos generados automáticamente:
 ```
-   outputs/models/
+outputs/models/
    ├── best_model.keras        # Mejor modelo según validación
    ├── checkpoint_full.keras   # Checkpoint completo
    ├── classes.txt             # Clases usadas
@@ -150,9 +153,11 @@ El modelo guardado en `best_model.keras` es posteriormente utilizado por los mó
 python src\evaluation\evaluate_model.py
 ```
 Este script carga `outputs/models/best_model.keras`, evalúa el desempeño sobre el conjunto de prueba y guarda artefactos de evaluación.
+
 Artefactos generados:
-   outputs/evaluation/
+
 ```text
+outputs/evaluation/
    ├── metrics_summary.json    # Resumen global de métricas
    ├── y_true.npy              # Etiquetas verdaderas
    ├── y_pred.npy              # Predicciones discretas
@@ -166,8 +171,9 @@ Artefactos generados:
 python src\visualization\generate_plots.py
 ```
 Salida:
-   outputs/plots/
+   
 ```text
+outputs/plots/
    ├── training_curves.png / .pdf / .svg
    ├── confusion_matrix.png / .pdf / .svg
    └── (otros gráficos según configuración)
